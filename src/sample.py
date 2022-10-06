@@ -21,6 +21,9 @@ def sample(G,k):
 	in_degrees = G.in_degree()
 	out_degrees = G.out_degree()
 
+	t3dot5 = time.time()
+	print(f'Getting in/out-degree sequences by neworkx functions finished. Time cost is {t3dot5 - t3}s')
+
 	# Find the maximum in/out-degree by looping the in-degree sequence
 	ind_max = 0
 	outd_max = 0
@@ -30,7 +33,7 @@ def sample(G,k):
 		if outd > outd_max: outd_max = outd
 	
 	t4 = time.time()
-	print(f'Getting in/out-degree sequence and max values finished! \nind_max is {ind_max}, outd_max is: {outd_max}, time cost is: {t4-t3}s')
+	print(f'Getting max values finished! \nind_max is {ind_max}, outd_max is: {outd_max}, time cost is: {t4-t3dot5}s')
 
 	# Create two dictionary-of-keys scipy sparse 2D arrays to store the matrices A and B
 	# A is the Joint Degree Matrix (JDM)
@@ -107,7 +110,7 @@ def sample(G,k):
 			if not ind == 0: free_stubs_in[node] = ind
 
 	t7 = time.time()
-	print(f'Graph Initialization with B finished! Time cost is {t7-t6}s')
+	print(f'Graph Initialization with B_s finished! Time cost is {t7-t6}s')
 
 	# Edge creation with A
 
@@ -122,7 +125,7 @@ def sample(G,k):
 		if flag:
 			flag = False
 			t8 = time.time()
-			print(f"Sorting of A finished! Time cost is: {t8-t7}s")
+			print(f"Sorting of A_s finished! Time cost is: {t8-t7}s")
 
 		# Check if there are still available nodes with pattern (outd, ind)
 		outd = key[0]
@@ -208,7 +211,7 @@ def sample(G,k):
 	fw.close()
 
 	t11 = time.time()
-	print(f'Calculating and writing ind, outd finish! Time cost is {t11-t10}s')
+	print(f'Calculating and writing ind, outd sequence finish! Time cost is {t11-t10}s')
 	print(f'Total time cost for sampling function is {t11-t3}s')	
 
 	# write edges to a file using networkx function .write_edgelist()
@@ -222,7 +225,7 @@ def sample(G,k):
 	SG_simple.add_edges_from(E)
 	simple_e = SG_simple.size()	
 	tol_e = SG.size()
-	
+
 	t13 = time.time()
 	print(f'Calculating multiple edges finish! Time cost is {t13 - t12}, difference is {tol_e - simple_e}')	
 
@@ -243,12 +246,18 @@ if __name__ == "__main__":
 		if '%' in line: continue               # The first line in the file starts with '%'
 		arr = line.rstrip().split()
 		E.append((int(arr[0]), int(arr[1])))
+	
+	t1dot5 = time.time() 
+	print(f"Reading Graph ends!! Time used is: {t1dot5-t1}s")
+
 	G = nx.DiGraph()                           # Networkx directed graph
 	G.add_edges_from(E)
 
 	t2 = time.time()
-	print(f"Reading Graph ends!! Time used is: {t2-t1}s")
+	print(f'Adding edges from E to G finished! Time used is: {t2 - t1dot5}s')
+	
 
 	# Calling the sample function
 	sample(G, input_sample_ratio)
+
 
