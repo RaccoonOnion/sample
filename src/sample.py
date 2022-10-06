@@ -1,6 +1,3 @@
-'''
-This is the test whether the algorithm can preserve the ind and outd distribution
-'''
 import sys
 import networkx as nx
 import numpy as np
@@ -11,59 +8,84 @@ from operator import itemgetter
 import traceback
 import time
 
-def test(G,k,t):
+'''
+The sampling function:
+Inputs:  G: The original graph, type is nx.DiGraph; k: input_sample_ratio, float (0,1)
+Outputs: None
+'''
+def sample(G,k):
+
 	t3 = time.time()
+
+	# Get in/out-degree sequences by calling functions in networkx
 	in_degrees = G.in_degree()
 	out_degrees = G.out_degree()
+
+	# Find the maximum in/out-degree by looping the in-degree sequence
 	ind_max = 0
 	outd_max = 0
 	for (node, ind) in in_degrees:
 		outd = out_degrees[node]
 		if ind > ind_max: ind_max = ind
 		if outd > outd_max: outd_max = outd
-	t4 = time.time()
-	print(f'ind_max is {ind_max}, outd_max is: {outd_max}, time cost is: {t4-t3}s')
 	
+	t4 = time.time()
+	print(f'Getting in/out-degree sequence and max values finished! \nind_max is {ind_max}, outd_max is: {outd_max}, time cost is: {t4-t3}s')
+
+	# Create two dictionary-of-keys scipy sparse 2D arrays to store the matrices A and B
+	# A is the Joint Degree Matrix (JDM)
+	# B is the Degree Correlation Matrix (DCM)
 	A = dok_array((outd_max+1, ind_max+1), dtype=np.intc)
 	B = dok_array((outd_max+1, ind_max+1), dtype=np.intc)
-	
+	# Calculate A
 	for (u, v) in G.edges:
 		outd = G.out_degree(u)
 		ind = G.in_degree(v)
 		A[outd, ind] += 1
-	
+	# Calculate B
 	for (node, ind) in in_degrees:
 		outd = G.out_degree(node)
 		B[outd, ind] += 1
+
 	t5 = time.time()
-	print(f"A, B finish. Time cost is {t5-t4}s")	
+	print(f"Initiating and calculating A, B finish. Time cost is {t5-t4}s")	
+
 	# Sampling process
+
+	# Create two dictionary-of-keys scipy sparse 2D arrays to store the sampled matrices A_s and B_s
 	A_s = dok_array((outd_max+1, ind_max+1), dtype=np.intc)
 	B_s = dok_array((outd_max+1, ind_max+1), dtype=np.intc)	
+	# Sample A with k
 	for (key, value) in A.items():
 		outd = key[0]
 		ind = key[1]
 		A_s[outd, ind] += round(value*k)
-	
+	# Sample B with k
 	for (key, value) in B.items():
 		outd = key[0]
 		ind = key[1]
 		B_s[outd, ind] += round(value*k)
+
 	t6 = time.time()
-	print(f"Sampling finish. Time cost is {t6-t5}s") #A_s is {A_s.toarray()}\n B_s is {B_s.toarray()}")
+	print(f"Sampling A, B finished. Time cost is {t6-t5}s")
 	
+	# Constructing process
+
+	# Create a networkx directed multi-graph SG to store the constucted graph
 	SG = nx.MultiDiGraph()
-	# for a given group, keep the list of all available node ids.
+
+	# for a given degree group, keep the list of all available node (with free stubs) ids.
 	degree_nodelist_in = {}
 	degree_nodelist_out = {}
-	# for a given node, keep track of the remaining stubs to be added.
+
+	# for a given node, keep track of the remaining free stubs.
 	free_stubs_out = {}
 	free_stubs_in = {}
-	# keep track of non-chords between pairs of node ids.
-	#non_chords = {}		
-	
+
+	# Using B to initiate degree_nodelist_in, degree_nodelist_out, free_stubs_out and free_stubs_in
+	# We let the node id starts from 1
 	idx = 1
-	for (key, value) in B_s.items():
+	for (key, value) in B_s.items(): # key is a tuple of shape (outd, ind), value is the number of nodes with (outd, ind) degree pattern
 		outd = key[0]
 		ind = key[1]
 		id_list = []
@@ -83,19 +105,26 @@ def test(G,k,t):
 		for node in id_list:
 			if not outd == 0: free_stubs_out[node] = outd
 			if not ind == 0: free_stubs_in[node] = ind
+
 	t7 = time.time()
-	print(f'Initialization finishes! Time cost is {t7-t6}s') #in nodes are {degree_nodelist_in}\n out nodes are {degree_nodelist_out}\n')
-	'''
-	Notice that for now the selection of k and l are not ordered, instead they are arranged in the order of input!!!
-	'''
-	flag = True
-	E = []
+	print(f'Graph Initialization with B finished! Time cost is {t7-t6}s')
+
+	# Edge creation with A
+
+	flag = True    # Boolean Flag var indicating the first round of the loop
+	E = []         # The edge set
+
+	# Sort A_s with the sorting algorithm defaulted by python sorted() function
+	# We use this process because by connecting the edges in descending order of value of A_s, we can minimize the loss
 	for (key, value) in sorted(A_s.items(), key=itemgetter(1), reverse=True):
+
+		# Record the time used for sorting
 		if flag:
 			flag = False
 			t8 = time.time()
-			print(f"Sorting finish! Time cost is: {t8-t7}s")
-		#print(f'len of E is:{len(E)}')
+			print(f"Sorting of A finished! Time cost is: {t8-t7}s")
+
+		# Check if there are still available nodes with pattern (outd, ind)
 		outd = key[0]
 		ind = key[1]
 		#print(f'ind is {ind}, outd is {outd}')
@@ -106,8 +135,8 @@ def test(G,k,t):
 
 		if not outd in degree_nodelist_out.keys():
 			continue
-		#print(f'ind is {ind}, outd is {outd}')
 		
+		# Add edges when possible
 		degree_nodelist_in_copy = degree_nodelist_in[ind].copy()
 		for i in range(l_in):
 			if len(degree_nodelist_in_copy) == 0 or len(degree_nodelist_out[outd]) == 0: break
@@ -115,7 +144,6 @@ def test(G,k,t):
 			l_out = len(degree_nodelist_out_copy)
 			u = random.randrange(len(degree_nodelist_in_copy))
 			id_in = degree_nodelist_in_copy.pop(u)
-			#flag = 0
 				
 			# Add a lot of edges at a time
 			in_stubs = free_stubs_in[id_in]
@@ -160,11 +188,17 @@ def test(G,k,t):
 				else:
 					free_stubs_out[id_out] -= 1
 			if value == 0: break
+
 	t9 = time.time()
-	print(f'Edges generating finish! Time cost is {t9-t8}s')
+	print(f'Edges generating finished! Time cost is {t9-t8}s')
+
+	# Add edges from E to SG
 	SG.add_edges_from(E)
+
 	t10 = time.time()
-	print(f'Adding edges finished, time cost is {t10 - t9}s')
+	print(f'Adding edges to SG and create graph finished, time cost is {t10 - t9}s')
+
+	# write the in/out-degree sequence to a file
 	fw = open(f'sampled_{k}_degree.txt','w')
 	sampled_in = SG.in_degree()
 	sampled_out = SG.out_degree()
@@ -172,31 +206,49 @@ def test(G,k,t):
 		outd = sampled_out[node]
 		fw.write(f'{ind},{outd}\n')
 	fw.close()
+
 	t11 = time.time()
 	print(f'Calculating and writing ind, outd finish! Time cost is {t11-t10}s')
-	print(f'Total time cost is {t11-t}s')	
+	print(f'Total time cost for sampling function is {t11-t3}s')	
 
+	# write edges to a file using networkx function .write_edgelist()
 	nx.write_edgelist(SG, f"sampled_{k}_edge_list")
+
 	t12 = time.time()
-	print(f'Writing edges finished, time cost is {t12 - t11}s')
+	print(f'Writing edges using nx finished, time cost is {t12 - t11}s')
+
+	# Checking how many edges are multiple edges
 	SG_simple = nx.DiGraph()
 	SG_simple.add_edges_from(E)
 	simple_e = SG_simple.size()	
 	tol_e = SG.size()
+	
 	t13 = time.time()
 	print(f'Calculating multiple edges finish! Time cost is {t13 - t12}, difference is {tol_e - simple_e}')	
 
+
+# The main function
 if __name__ == "__main__":
+
+	# Two input cmd line arguments
+	input_file_path = sys.argv[1]
+	input_sample_ratio = float(sys.argv[2])
+
 	t1 = time.time()
+
+	# Read graph from file
 	E = []
-	fr = open(sys.argv[1], 'r')
+	fr = open(input_file_path, 'r')
 	for line in fr:
-		if '%' in line: continue
+		if '%' in line: continue               # The first line in the file starts with '%'
 		arr = line.rstrip().split()
 		E.append((int(arr[0]), int(arr[1])))
-	G = nx.DiGraph()
+	G = nx.DiGraph()                           # Networkx directed graph
 	G.add_edges_from(E)
+
 	t2 = time.time()
 	print(f"Reading Graph ends!! Time used is: {t2-t1}s")
-	test(G, float(sys.argv[2]), t1)
+
+	# Calling the sample function
+	sample(G, input_sample_ratio)
 
