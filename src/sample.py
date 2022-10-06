@@ -8,6 +8,96 @@ from operator import itemgetter
 import traceback
 import time
 
+
+# Edge creation with A
+def create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A_s):
+
+	t7 = time.time()
+
+	flag = True    # Boolean Flag var indicating the first round of the loop
+	E = []         # The edge set
+
+	# Sort A_s with the sorting algorithm defaulted by python sorted() function
+	# We use this process because by connecting the edges in descending order of value of A_s, we can minimize the loss
+	for (key, value) in sorted(A_s.items(), key=itemgetter(1), reverse=True):
+
+		# Record the time used for sorting
+		if flag:
+			flag = False
+			t8 = time.time()
+			print(f"Sorting of A_s finished! Time cost is: {t8-t7}s")
+
+		# Check if there are still available nodes with pattern (outd, ind)
+		outd = key[0]
+		ind = key[1]
+		#print(f'ind is {ind}, outd is {outd}')
+		if ind in ind2id_list.keys():
+			l_in = len(ind2id_list[ind])
+		else:
+			continue
+
+		if not outd in outd2id_list.keys():
+			continue
+		
+		# Add edges when possible
+		degree_nodelist_in_copy = ind2id_list[ind].copy()
+		for i in range(l_in):
+			if len(degree_nodelist_in_copy) == 0 or len(outd2id_list[outd]) == 0: break
+			degree_nodelist_out_copy = outd2id_list[outd].copy()
+			l_out = len(degree_nodelist_out_copy)
+			u = random.randrange(len(degree_nodelist_in_copy))
+			id_in = degree_nodelist_in_copy.pop(u)
+				
+			# Add a lot of edges at a time
+			in_stubs = id2freestubs_in[id_in]
+			if value < in_stubs and value < l_out:
+				id_out_list = random.sample(degree_nodelist_out_copy, value)
+				id2freestubs_in[id_in] -= value
+				value = 0
+			elif value < in_stubs and value >= l_out:
+				#flag = 1
+				id_out_list = degree_nodelist_out_copy
+				id2freestubs_in[id_in] -= l_out
+				value -= l_out
+			elif value >= in_stubs and value < l_out:
+				#flag = 2
+				id_out_list = random.sample(degree_nodelist_out_copy, in_stubs)
+				del id2freestubs_in[id_in]
+				ind2id_list[ind].remove(id_in)
+				value -= in_stubs
+			elif value >= in_stubs and value >= l_out:
+				if in_stubs > l_out:
+					#flag = 3
+					id_out_list = degree_nodelist_out_copy
+					id2freestubs_in[id_in] -= l_out
+					value -= l_out
+				elif in_stubs < l_out:
+					#flag = 4
+					id_out_list = random.sample(degree_nodelist_out_copy, in_stubs)
+					del id2freestubs_in[id_in]
+					ind2id_list[ind].remove(id_in)
+					value -= in_stubs
+				else:	
+					#flag = 5
+					id_out_list = degree_nodelist_out_copy
+					del id2freestubs_in[id_in]
+					ind2id_list[ind].remove(id_in)
+					value -= l_out
+			for id_out in id_out_list:
+				E.append((id_out, id_in))
+				if id2freestubs_out[id_out] == 1:
+					del id2freestubs_out[id_out]
+					outd2id_list[outd].remove(id_out)
+				else:
+					id2freestubs_out[id_out] -= 1
+			if value == 0: break
+	
+	t9 = time.time()
+	print(f'Edges generating finished! Time cost is {t9-t8}s')
+	
+	return E
+	
+
 '''
 The sampling function:
 Inputs:  G: The original graph, type is nx.DiGraph; k: input_sample_ratio, float (0,1)
@@ -78,123 +168,43 @@ def sample(G,k):
 	SG = nx.MultiDiGraph()
 
 	# for a given degree group, keep the list of all available node (with free stubs) ids.
-	degree_nodelist_in = {}
-	degree_nodelist_out = {}
+	ind2id_list = {}
+	outd2id_list = {}
 
 	# for a given node, keep track of the remaining free stubs.
-	free_stubs_out = {}
-	free_stubs_in = {}
+	id2freestubs_out = {}
+	id2freestubs_in = {}
 
 	# Using B to initiate degree_nodelist_in, degree_nodelist_out, free_stubs_out and free_stubs_in
 	# We let the node id starts from 1
-	idx = 1
+	id = 1
 	for (key, value) in B_s.items(): # key is a tuple of shape (outd, ind), value is the number of nodes with (outd, ind) degree pattern
 		outd = key[0]
 		ind = key[1]
 		id_list = []
 		for i in range(value):
-			id_list.append(idx)
-			idx += 1
+			id_list.append(id)
+			id += 1
 		if not ind == 0: 
-			if ind in degree_nodelist_in.keys():
-				degree_nodelist_in[ind].extend( id_list.copy() )
+			if ind in ind2id_list.keys():
+				ind2id_list[ind].extend( id_list.copy() )
 			else:
-				degree_nodelist_in[ind] = id_list.copy()	
+				ind2id_list[ind] = id_list.copy()	
 		if not outd == 0:
-			if outd in degree_nodelist_out.keys():
-				degree_nodelist_out[outd].extend( id_list.copy() )
+			if outd in outd2id_list.keys():
+				outd2id_list[outd].extend( id_list.copy() )
 			else:
-				degree_nodelist_out[outd] = id_list.copy()
+				outd2id_list[outd] = id_list.copy()
 		for node in id_list:
-			if not outd == 0: free_stubs_out[node] = outd
-			if not ind == 0: free_stubs_in[node] = ind
+			if not outd == 0: id2freestubs_out[node] = outd
+			if not ind == 0: id2freestubs_in[node] = ind
 
 	t7 = time.time()
 	print(f'Graph Initialization with B_s finished! Time cost is {t7-t6}s')
 
-	# Edge creation with A
-
-	flag = True    # Boolean Flag var indicating the first round of the loop
-	E = []         # The edge set
-
-	# Sort A_s with the sorting algorithm defaulted by python sorted() function
-	# We use this process because by connecting the edges in descending order of value of A_s, we can minimize the loss
-	for (key, value) in sorted(A_s.items(), key=itemgetter(1), reverse=True):
-
-		# Record the time used for sorting
-		if flag:
-			flag = False
-			t8 = time.time()
-			print(f"Sorting of A_s finished! Time cost is: {t8-t7}s")
-
-		# Check if there are still available nodes with pattern (outd, ind)
-		outd = key[0]
-		ind = key[1]
-		#print(f'ind is {ind}, outd is {outd}')
-		if ind in degree_nodelist_in.keys():
-			l_in = len(degree_nodelist_in[ind])
-		else:
-			continue
-
-		if not outd in degree_nodelist_out.keys():
-			continue
-		
-		# Add edges when possible
-		degree_nodelist_in_copy = degree_nodelist_in[ind].copy()
-		for i in range(l_in):
-			if len(degree_nodelist_in_copy) == 0 or len(degree_nodelist_out[outd]) == 0: break
-			degree_nodelist_out_copy = degree_nodelist_out[outd].copy()
-			l_out = len(degree_nodelist_out_copy)
-			u = random.randrange(len(degree_nodelist_in_copy))
-			id_in = degree_nodelist_in_copy.pop(u)
-				
-			# Add a lot of edges at a time
-			in_stubs = free_stubs_in[id_in]
-			if value < in_stubs and value < l_out:
-				id_out_list = random.sample(degree_nodelist_out_copy, value)
-				free_stubs_in[id_in] -= value
-				value = 0
-			elif value < in_stubs and value >= l_out:
-				#flag = 1
-				id_out_list = degree_nodelist_out_copy
-				free_stubs_in[id_in] -= l_out
-				value -= l_out
-			elif value >= in_stubs and value < l_out:
-				#flag = 2
-				id_out_list = random.sample(degree_nodelist_out_copy, in_stubs)
-				del free_stubs_in[id_in]
-				degree_nodelist_in[ind].remove(id_in)
-				value -= in_stubs
-			elif value >= in_stubs and value >= l_out:
-				if in_stubs > l_out:
-					#flag = 3
-					id_out_list = degree_nodelist_out_copy
-					free_stubs_in[id_in] -= l_out
-					value -= l_out
-				elif in_stubs < l_out:
-					#flag = 4
-					id_out_list = random.sample(degree_nodelist_out_copy, in_stubs)
-					del free_stubs_in[id_in]
-					degree_nodelist_in[ind].remove(id_in)
-					value -= in_stubs
-				else:	
-					#flag = 5
-					id_out_list = degree_nodelist_out_copy
-					del free_stubs_in[id_in]
-					degree_nodelist_in[ind].remove(id_in)
-					value -= l_out
-			for id_out in id_out_list:
-				E.append((id_out, id_in))
-				if free_stubs_out[id_out] == 1:
-					del free_stubs_out[id_out]
-					degree_nodelist_out[outd].remove(id_out)
-				else:
-					free_stubs_out[id_out] -= 1
-			if value == 0: break
+	E = create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A_s)
 
 	t9 = time.time()
-	print(f'Edges generating finished! Time cost is {t9-t8}s')
-
 	# Add edges from E to SG
 	SG.add_edges_from(E)
 
