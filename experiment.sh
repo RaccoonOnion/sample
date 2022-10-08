@@ -86,6 +86,32 @@ echo "Current directory is: $(pwd)"
 
 }
 
+# function to plot in/out-degree distributions for both sample and originals
+PlotDistributions() {
+
+flag=0
+
+cd data/test
+
+for FILE in *;
+do
+	if [ $flag -eq 0 ]
+	then
+		cd ../../results;
+		flag=1;	
+	fi
+	cd "$FILE"
+	cwd=$(pwd)
+	echo $cwd
+	python ../../src/plot.py "$cwd" "$FILE" $sample_ratio
+	cd ..
+done
+
+echo "Distribution Generation finished!"
+echo "Current directory is: $(pwd)"
+
+}
+
 ###
 
 for arg in "$@"; do
@@ -97,6 +123,9 @@ for arg in "$@"; do
   fi
   if [[ "$arg" = -god ]] || [[ "$arg" = --get-original-distributions ]]; then
     ARG_GET_ORIGINAL_DISTRIBUTIONS=true
+  fi
+  if [[ "$arg" = -pd ]] || [[ "$arg" = --plot-distributions ]]; then
+    ARG_PLOT_DISTRIBUTIONS=true
   fi
 done
 
@@ -112,6 +141,10 @@ fi
 
 if [[ "$ARG_GET_ORIGINAL_DISTRIBUTIONS" = true ]]; then
   GetOriginalDistributions
+fi
+
+if [[ "$ARG_PLOT_DISTRIBUTIONS" = true ]]; then
+  PlotDistributions
 fi
 
 
