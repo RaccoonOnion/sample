@@ -12,6 +12,8 @@ import time
 # Edge creation with A
 def create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A_s):
 
+	time_list = []
+
 	t7 = time.time()
 
 	flag = True    # Boolean Flag var indicating the first round of the loop
@@ -26,6 +28,7 @@ def create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A
 			flag = False
 			t8 = time.time()
 			print(f"Sorting of A_s finished! Time cost is: {t8-t7}s")
+			time_list.append(t8-t7)
 
 		# Check if there are still available nodes with pattern (outd, ind)
 		outd = key[0]
@@ -94,8 +97,9 @@ def create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A
 	
 	t9 = time.time()
 	print(f'Edges generating finished! Time cost is {t9-t8}s')
+	time_list.append(t9-t8)
 	
-	return E
+	return E, time_list
 	
 
 '''
@@ -103,7 +107,9 @@ The sampling function:
 Inputs:  G: The original graph, type is nx.DiGraph; k: input_sample_ratio, float (0,1)
 Outputs: None
 '''
-def sample(G,k):
+def sample(G, k, file_name):
+
+	time_list = []
 
 	t3 = time.time()
 
@@ -113,6 +119,7 @@ def sample(G,k):
 
 	t3dot5 = time.time()
 	print(f'Getting in/out-degree sequences by neworkx functions finished. Time cost is {t3dot5 - t3}s')
+	time_list.append(t3dot5 - t3)
 
 	# Find the maximum in/out-degree by looping the in-degree sequence
 	ind_max = 0
@@ -124,6 +131,7 @@ def sample(G,k):
 	
 	t4 = time.time()
 	print(f'Getting max values finished! \nind_max is {ind_max}, outd_max is: {outd_max}, time cost is: {t4-t3dot5}s')
+	time_list.append(t4-t3dot5)
 
 	# Create two dictionary-of-keys scipy sparse 2D arrays to store the matrices A and B
 	# A is the Joint Degree Matrix (JDM)
@@ -141,7 +149,8 @@ def sample(G,k):
 		B[outd, ind] += 1
 
 	t5 = time.time()
-	print(f"Initiating and calculating A, B finish. Time cost is {t5-t4}s")	
+	print(f"Initiating and calculating A, B finish. Time cost is {t5-t4}s")
+	time_list.append(t5-t4)	
 
 	# Sampling process
 
@@ -161,6 +170,7 @@ def sample(G,k):
 
 	t6 = time.time()
 	print(f"Sampling A, B finished. Time cost is {t6-t5}s")
+	time_list.append(t6-t5)
 	
 	# Constructing process
 
@@ -201,8 +211,11 @@ def sample(G,k):
 
 	t7 = time.time()
 	print(f'Graph Initialization with B_s finished! Time cost is {t7-t6}s')
+	time_list.append(t7-t6)
 
-	E = create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A_s)
+	result = create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A_s)
+	E = result[0]
+	time_list.extend(result[1])
 
 	t9 = time.time()
 	# Add edges from E to SG
@@ -210,9 +223,10 @@ def sample(G,k):
 
 	t10 = time.time()
 	print(f'Adding edges to SG and create graph finished, time cost is {t10 - t9}s')
+	time_list.append(t10 - t9)
 
 	# write the in/out-degree sequence to a file
-	fw = open(f'sampled_{k}_degree.txt','w')
+	fw = open(f'results/{file_name}/sampled_{k}_degree_sequence.txt','w')
 	sampled_in = SG.in_degree()
 	sampled_out = SG.out_degree()
 	for (node, ind) in sampled_in:
@@ -222,13 +236,16 @@ def sample(G,k):
 
 	t11 = time.time()
 	print(f'Calculating and writing ind, outd sequence finish! Time cost is {t11-t10}s')
-	print(f'Total time cost for sampling function is {t11-t3}s')	
+	print(f'Total time cost for sampling function is {t11-t3}s')
+	time_list.append(t11-t10)
+	time_list.append(t11-t3)
 
 	# write edges to a file using networkx function .write_edgelist()
-	nx.write_edgelist(SG, f"sampled_{k}_edge_list")
+	nx.write_edgelist(SG, f"results/{file_name}/sampled_{k}_edge_list.txt")
 
 	t12 = time.time()
 	print(f'Writing edges using nx finished, time cost is {t12 - t11}s')
+	time_list.append(t12 - t11)
 
 	# Checking how many edges are multiple edges
 	SG_simple = nx.DiGraph()
@@ -238,36 +255,6 @@ def sample(G,k):
 
 	t13 = time.time()
 	print(f'Calculating multiple edges finish! Time cost is {t13 - t12}, difference is {tol_e - simple_e}')	
+	time_list.append(t13 - t12)
 
-
-# The main function
-if __name__ == "__main__":
-
-	# Two input cmd line arguments
-	input_file_path = sys.argv[1]
-	input_sample_ratio = float(sys.argv[2])
-
-	t1 = time.time()
-
-	# Read graph from file
-	E = []
-	fr = open(input_file_path, 'r')
-	for line in fr:
-		if '%' in line: continue               # The first line in the file starts with '%'
-		arr = line.rstrip().split()
-		E.append((int(arr[0]), int(arr[1])))
-	
-	t1dot5 = time.time() 
-	print(f"Reading Graph ends!! Time used is: {t1dot5-t1}s")
-
-	G = nx.DiGraph()                           # Networkx directed graph
-	G.add_edges_from(E)
-
-	t2 = time.time()
-	print(f'Adding edges from E to G finished! Time used is: {t2 - t1dot5}s')
-	
-
-	# Calling the sample function
-	sample(G, input_sample_ratio)
-
-
+	return time_list, tol_e - simple_e
