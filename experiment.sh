@@ -59,6 +59,33 @@ echo "Current directory is: $(pwd)"
 
 }
 
+# function to get original degree distributions
+GetOriginalDistributions() {
+
+flag=0
+
+cd data/test
+
+for FILE in *;
+do
+	if [ $flag -eq 0 ]
+	then
+		cd ../../results;
+		flag=1;	
+	fi
+	cd "$FILE"
+	cwd=$(pwd)
+	echo $cwd
+	python ../../src/get-original-distr.py ../../data/test/"$FILE" 
+	python ../../src/cal-fre.py $cwd/original_degree_sequence.txt "$FILE" original
+	cd ..
+done
+
+echo "Distribution Generation finished!"
+echo "Current directory is: $(pwd)"
+
+}
+
 ###
 
 for arg in "$@"; do
@@ -68,8 +95,8 @@ for arg in "$@"; do
   if [[ "$arg" = -gd ]] || [[ "$arg" = --get-distributions ]]; then
     ARG_GET_DISTRIBUTIONS=true
   fi
-  if [[ "$arg" = -a ]] || [[ "$arg" = --aws-copy ]]; then
-    ARG_AWS_COPY=true
+  if [[ "$arg" = -god ]] || [[ "$arg" = --get-original-distributions ]]; then
+    ARG_GET_ORIGINAL_DISTRIBUTIONS=true
   fi
 done
 
@@ -83,8 +110,8 @@ if [[ "$ARG_GET_DISTRIBUTIONS" = true ]]; then
   GetDistributions
 fi
 
-if [[ "$ARG_AWS_COPY" = true ]]; then
-  AwsCopy
+if [[ "$ARG_GET_ORIGINAL_DISTRIBUTIONS" = true ]]; then
+  GetOriginalDistributions
 fi
 
 
