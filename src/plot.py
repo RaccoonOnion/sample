@@ -75,7 +75,7 @@ if __name__ == "__main__":
     axs[1, 1].set_yscale('log')
     axs[1, 1].set_xscale('log')
     # axs[1, 1].loglog(x_out_origin, y_out_origin, nonpositive = 'mask', base = 10)  
-    axs[1, 1].set_title('Original in-degree distribution', fontdict = font)
+    axs[1, 1].set_title('Original out-degree distribution', fontdict = font)
 
     t1dot5 = time.time() 
     print(f"Reading and ploting Distributions ends!! Time used is: {t1dot5-t1}s")
