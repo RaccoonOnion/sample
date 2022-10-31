@@ -29,4 +29,4 @@ stdevs = np.sqrt(np.diag(cov))
 # Calculate the residuals
 # res = fre_list_ad - power_law(deg_list_ad, *pars)
 print(f'Dataset: {dataset_name}, dataset type: {dataset_type}, {io_flag}')
-print(f'Results: a={pars[0]}, b={pars[1]}; stdev of a: {stdevs[0]}, stdev of b: {stdevs[1]}\n')
+print(f'Results: a={pars[0]}, b={pars[1]}; stdev of a: {stdevs[0]}, stdev of b: {stdevs[1]}')

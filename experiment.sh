@@ -156,14 +156,45 @@ do
 	cd "$FILE"
 	cwd=$(pwd)
 	# echo $cwd
-	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_ind-distr.csv "$FILE" "$sample_ratio" ind
-	python ../../src/fit-pl.py "$FILE"_original_ind-distr.csv "$FILE" original ind
+	python ../../src/cal-fre-distr.py "$FILE"_"$sample_ratio"_ind-distr.csv "$FILE" "$sample_ratio" ind
+	python ../../src/cal-fre-distr.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
+	python ../../src/cal-fre-distr.py "$FILE"_original_ind-distr.csv "$FILE" original ind
+	python ../../src/cal-fre-distr.py "$FILE"_original_outd-distr.csv "$FILE" original outd
 	echo "-----------------------------------------------------------------------------------------"
 	cd ..
-	exit 0
 done
 
 echo "Frequency Distributions Generation finished!"
+echo "Current directory is: $(pwd)"
+
+}
+
+# function to fit power law using frequency distributions
+FitPowerLaws() {
+
+flag=0
+
+cd data/test
+
+for FILE in *;
+do
+	if [ $flag -eq 0 ]
+	then
+		cd ../../results;
+		flag=1;	
+	fi
+	cd "$FILE"
+	cwd=$(pwd)
+	# echo $cwd
+	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_ind-distr.csv "$FILE" "$sample_ratio" ind
+	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
+	python ../../src/fit-pl.py "$FILE"_original_ind-distr.csv "$FILE" original ind
+	python ../../src/fit-pl.py "$FILE"_original_outd-distr.csv "$FILE" original outd
+	echo "-----------------------------------------------------------------------------------------"
+	cd ..
+done
+
+echo "Power Law fitting finished!"
 echo "Current directory is: $(pwd)"
 
 }
@@ -185,6 +216,9 @@ for arg in "$@"; do
   fi
   if [[ "$arg" = -gfd ]] || [[ "$arg" = --get-frequency-distributions ]]; then
     ARG_GET_FREQUENCY_DISTRIBUTIONS=true
+  fi
+  if [[ "$arg" = -fpl ]] || [[ "$arg" = --fit-power-laws ]]; then
+    ARG_FIT_POWER_LAWS=true
   fi
 done
 
@@ -208,6 +242,9 @@ fi
 
 if [[ "$ARG_GET_FREQUENCY_DISTRIBUTIONS" = true ]]; then
   GetFrequencyDistributions
+fi
+if [[ "$ARG_FIT_POWER_LAWS" = true ]]; then
+  FitPowerLaws
 fi
 
 
