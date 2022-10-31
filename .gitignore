@@ -1,2 +1,5 @@
 # test files
 test-fit.py
+
+# python caches
+__pycache__
