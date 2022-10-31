@@ -112,6 +112,62 @@ echo "Current directory is: $(pwd)"
 
 }
 
+# function to get original degree distributions
+GetOriginalDistributions() {
+
+flag=0
+
+cd data/test
+
+for FILE in *;
+do
+	if [ $flag -eq 0 ]
+	then
+		cd ../../results;
+		flag=1;	
+	fi
+	cd "$FILE"
+	cwd=$(pwd)
+	echo $cwd
+	python ../../src/get-original-distr.py ../../data/test/"$FILE" 
+	python ../../src/cal-fre.py $cwd/original_degree_sequence.txt "$FILE" original
+	cd ..
+done
+
+echo "Distribution Generation finished!"
+echo "Current directory is: $(pwd)"
+
+}
+
+# function to get in/out-degree frequency distributions from degree distributions
+GetFrequencyDistributions() {
+
+flag=0
+
+cd data/test
+
+for FILE in *;
+do
+	if [ $flag -eq 0 ]
+	then
+		cd ../../results;
+		flag=1;	
+	fi
+	cd "$FILE"
+	cwd=$(pwd)
+	# echo $cwd
+	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_ind-distr.csv "$FILE" "$sample_ratio" ind
+	python ../../src/fit-pl.py "$FILE"_original_ind-distr.csv "$FILE" original ind
+	echo "-----------------------------------------------------------------------------------------"
+	cd ..
+	exit 0
+done
+
+echo "Frequency Distributions Generation finished!"
+echo "Current directory is: $(pwd)"
+
+}
+
 ###
 
 for arg in "$@"; do
@@ -126,6 +182,9 @@ for arg in "$@"; do
   fi
   if [[ "$arg" = -pd ]] || [[ "$arg" = --plot-distributions ]]; then
     ARG_PLOT_DISTRIBUTIONS=true
+  fi
+  if [[ "$arg" = -gfd ]] || [[ "$arg" = --get-frequency-distributions ]]; then
+    ARG_GET_FREQUENCY_DISTRIBUTIONS=true
   fi
 done
 
@@ -145,6 +204,10 @@ fi
 
 if [[ "$ARG_PLOT_DISTRIBUTIONS" = true ]]; then
   PlotDistributions
+fi
+
+if [[ "$ARG_GET_FREQUENCY_DISTRIBUTIONS" = true ]]; then
+  GetFrequencyDistributions
 fi
 
 
