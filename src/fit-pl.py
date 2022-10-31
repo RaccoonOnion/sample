@@ -1,7 +1,7 @@
 # Import curve fitting package from scipy and other dependencies
 from scipy.optimize import curve_fit 
 import numpy as np
-
+import sys
 # import read functions
 import read
 
