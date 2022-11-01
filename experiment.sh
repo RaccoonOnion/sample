@@ -187,8 +187,8 @@ do
 	cwd=$(pwd)
 	# echo $cwd
 	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_ind-distr.csv "$FILE" "$sample_ratio" ind
-	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
 	python ../../src/fit-pl.py "$FILE"_original_ind-distr.csv "$FILE" original ind
+	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
 	python ../../src/fit-pl.py "$FILE"_original_outd-distr.csv "$FILE" original outd
 	echo "-----------------------------------------------------------------------------------------"
 	cd ..
