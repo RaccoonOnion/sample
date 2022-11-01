@@ -1,12 +1,3 @@
-Dataset: out.cit-HepPh, dataset type: 0.75, ind
-Results: a=3688.433934542118, b=-0.8808545529616448; stdev of a: 71.84042319372766, stdev of b: 0.01446590592683887
-Dataset: out.cit-HepPh, dataset type: 0.75, outd
-Results: a=2796.369919228415, b=-0.707578248390729; stdev of a: 144.1565664296835, stdev of b: 0.027578893017761973
-Dataset: out.cit-HepPh, dataset type: original, ind
-Results: a=4874.252553624073, b=-0.8918560945414666; stdev of a: 86.50127684808344, stdev of b: 0.01338338574302494
-Dataset: out.cit-HepPh, dataset type: original, outd
-Results: a=3662.847929115547, b=-0.7135707724410261; stdev of a: 180.7448050099134, stdev of b: 0.026481949975836243
------------------------------------------------------------------------------------------
 (base) raccoononion@Ryans-MacBook-Air sample % sh experiment.sh -fpl
 Dataset: out.cit-HepPh, dataset type: 0.75, ind
 Results: a=3688.433934542118, b=-0.8808545529616448; stdev of a: 71.84042319372766, stdev of b: 0.01446590592683887
