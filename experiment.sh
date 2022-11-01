@@ -4,6 +4,7 @@
 
 # function to run experiments
 readonly sample_ratio=0.75
+readonly seperation_line="------------------------------------------------------------------------------------------------------------------------------------------"
 
 RunExperiments() {
 
@@ -160,7 +161,7 @@ do
 	python ../../src/cal-fre-distr.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
 	python ../../src/cal-fre-distr.py "$FILE"_original_ind-distr.csv "$FILE" original ind
 	python ../../src/cal-fre-distr.py "$FILE"_original_outd-distr.csv "$FILE" original outd
-	echo "-----------------------------------------------------------------------------------------"
+	echo $seperation_line
 	cd ..
 done
 
@@ -190,7 +191,7 @@ do
 	python ../../src/fit-pl.py "$FILE"_original_ind-distr.csv "$FILE" original ind
 	python ../../src/fit-pl.py "$FILE"_"$sample_ratio"_outd-distr.csv "$FILE" "$sample_ratio" outd
 	python ../../src/fit-pl.py "$FILE"_original_outd-distr.csv "$FILE" original outd
-	echo "-----------------------------------------------------------------------------------------"
+	echo $seperation_line
 	cd ..
 done
 
