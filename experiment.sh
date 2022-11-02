@@ -8,25 +8,26 @@ readonly seperation_line="------------------------------------------------------
 
 RunExperiments() {
 
+data_folder="synthetic"
+cd data/"$data_folder"
 flag=0
-
-cd data/test
-
 for FILE in *;
 do
-	if [ $flag -eq 0 ]
+	if [ $flag -eq 0 ];
 	then
 		cd ../../results;
-		mkdir "$FILE";
 		flag=1;	
-	else
-		mkdir "$FILE";
+	fi
+	if ! [ -d "$FILE" ]; then
+	# Take action if $DIR exists. #
+	mkdir "$FILE"
+	echo "create folder for $FILE"
 	fi
 done
 
 pwd #sample-proj/results
 cd ../
-for FILE in data/test/*;
+for FILE in data/"$data_folder"/*;
 do
 	echo "$FILE"
 	python src/test.py "$FILE" "$sample_ratio"
@@ -38,8 +39,9 @@ done
 GetDistributions() {
 
 flag=0
+data_folder="synthetic"
 
-cd data/test
+cd data/"$data_folder"
 
 for FILE in *;
 do
@@ -64,20 +66,25 @@ echo "Current directory is: $(pwd)"
 GetOriginalDistributions() {
 
 flag=0
+data_folder="synthetic"
+cd data/"$data_folder"
 
-cd data/test
-
-for FILE in *;
+for FILE in sf*;
 do
 	if [ $flag -eq 0 ]
 	then
 		cd ../../results;
 		flag=1;	
 	fi
+	if ! [ -d "$FILE" ]; then
+	# Take action if $DIR exists. #
+	mkdir "$FILE"
+	echo "create folder for $FILE"
+	fi
 	cd "$FILE"
 	cwd=$(pwd)
 	echo $cwd
-	python ../../src/get-original-distr.py ../../data/test/"$FILE" 
+	python ../../src/get-original-distr.py ../../data/"$data_folder"/"$FILE" 
 	python ../../src/cal-fre.py $cwd/original_degree_sequence.txt "$FILE" original
 	cd ..
 done
@@ -89,10 +96,10 @@ echo "Current directory is: $(pwd)"
 
 # function to plot in/out-degree distributions for both sample and originals
 PlotDistributions() {
-
+data_folder="synthetic"
 flag=0
 
-cd data/test
+cd data/"$data_folder"
 
 for FILE in *;
 do
@@ -113,39 +120,12 @@ echo "Current directory is: $(pwd)"
 
 }
 
-# function to get original degree distributions
-GetOriginalDistributions() {
-
-flag=0
-
-cd data/test
-
-for FILE in *;
-do
-	if [ $flag -eq 0 ]
-	then
-		cd ../../results;
-		flag=1;	
-	fi
-	cd "$FILE"
-	cwd=$(pwd)
-	echo $cwd
-	python ../../src/get-original-distr.py ../../data/test/"$FILE" 
-	python ../../src/cal-fre.py $cwd/original_degree_sequence.txt "$FILE" original
-	cd ..
-done
-
-echo "Distribution Generation finished!"
-echo "Current directory is: $(pwd)"
-
-}
-
 # function to get in/out-degree frequency distributions from degree distributions
 GetFrequencyDistributions() {
-
+data_folder="synthetic"
 flag=0
 
-cd data/test
+cd data/"$data_folder"
 
 for FILE in *;
 do
@@ -174,8 +154,8 @@ echo "Current directory is: $(pwd)"
 FitPowerLaws() {
 
 flag=0
-
-cd data/test
+data_folder="synthetic"
+cd data/"$data_folder"
 
 for FILE in *;
 do

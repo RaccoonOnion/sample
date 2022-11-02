@@ -3,7 +3,11 @@ import time
 import sys
 import networkx as nx
 
-# The main function
+'''
+The main function
+Inputs: input_file_path: edge list file, input_sample_ratio: sample ratio
+Outputs: in/out-degree sequence file, edge list file, statistics.txt: time statistics 
+'''
 if __name__ == "__main__":
 
     # Two input cmd line arguments
@@ -11,12 +15,6 @@ if __name__ == "__main__":
     arr = input_file_path.split('/')
     file_name = arr[2]
     input_sample_ratio = float(sys.argv[2])
-
-    # folder_name = sys.argv[1]
-    # file_name = sys.argv[2]
-    # input_sample_ratio = float(sys.argv[3])
-    # input_file_path = "../data/" + folder_name + "/" + file_name
-    
     
     time_list = []
 
@@ -50,3 +48,4 @@ if __name__ == "__main__":
     for time in time_list:
         fw.write(f'{str(time)}\n')
     fw.write(f'# multi-edges: {str(multi_edge_number)}')
+    fw.close()
