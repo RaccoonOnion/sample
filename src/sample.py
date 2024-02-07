@@ -1,4 +1,5 @@
 import sys
+import os
 import networkx as nx
 import numpy as np
 import math
@@ -105,7 +106,7 @@ def create_edges(ind2id_list, outd2id_list, id2freestubs_in, id2freestubs_out, A
 '''
 The sampling function:
 Inputs:  G: The original graph, type is nx.DiGraph; k: input_sample_ratio, float (0,1)
-Outputs: None
+Outputs: time_list: time used in each step, type is list; # of multiple edges, int
 '''
 def sample(G, k, file_name):
 
@@ -226,7 +227,10 @@ def sample(G, k, file_name):
 	time_list.append(t10 - t9)
 
 	# write the in/out-degree sequence to a file
-	fw = open(f'results/{file_name}/sampled_{k}_degree_sequence.txt','w')
+	output_folder = f'results/{file_name}'
+	if not os.path.exists(output_folder):
+		os.makedirs(output_folder)
+	fw = open(f'{output_folder}/sampled_{k}_degree_sequence.txt','w')
 	sampled_in = SG.in_degree()
 	sampled_out = SG.out_degree()
 	for (node, ind) in sampled_in:
